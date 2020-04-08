@@ -15,6 +15,7 @@ var (
 
 func main() {
 	function.MonitoredChannels()
+	function.AllowedUsers()
 
 	port = os.Getenv("PORT")
 	if port == "" {

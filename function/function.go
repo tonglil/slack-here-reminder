@@ -14,6 +14,7 @@ import (
 var (
 	token    string
 	channels []string
+	userIds  []string
 	re       = regexp.MustCompile(`<!(here|channel|everyone)>`)
 )
 
@@ -24,14 +25,21 @@ const (
 func init() {
 	token = os.Getenv("WEBHOOK_TOKEN")
 	if token == "" {
-		log.Println("no WEBHOOK_TOKEN specified, this will process all requests")
+		log.Println("no WEBHOOK_TOKEN specified, processing all requests")
 	}
 
 	chs := os.Getenv("CHANNEL_NAMES")
 	if chs == "" {
-		log.Println("no CHANNEL_NAMES specified, this will monitor all channels")
+		log.Println("no CHANNEL_NAMES specified, monitoring all channels")
 	} else {
 		channels = strings.Split(chs, ",")
+	}
+
+	ids := os.Getenv("ALLOWED_USER_IDS")
+	if ids == "" {
+		log.Println("no ALLOWED_USER_IDS specified, monitoring all users")
+	} else {
+		userIds = strings.Split(ids, ",")
 	}
 }
 
@@ -47,19 +55,18 @@ func HereHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channel := r.Form.Get("channel_name")
 	user := r.Form.Get("user_id")
 	trigger := r.Form.Get("trigger_word")
+	channel := r.Form.Get("channel_name")
 
-	monitored := false
-	for _, c := range channels {
-		if channel == c {
-			monitored = true
-			break
-		}
+	// Ignore allowed users
+	if len(userIds) > 0 && inSet(user, userIds) {
+		log.Printf("user '%s' used '%s' in '#%s' but is allowed", user, trigger, channel)
+		return
 	}
 
-	if len(channels) > 0 && !monitored {
+	// Ignore unmonitored channels
+	if len(channels) > 0 && !inSet(channel, channels) {
 		log.Printf("user '%s' used '%s' in '#%s' but it is not monitored", user, trigger, channel)
 		return
 	}
