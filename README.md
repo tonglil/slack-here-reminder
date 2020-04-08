@@ -9,6 +9,7 @@ The following environment variables can be set:
 - `PORT`: specify a port *when running as a web service* (optional)
 - `WEBHOOK_TOKEN`: specify the token from the Outgoing Webhook to verify requests from Slack (optional)
 - `CHANNEL_NAMES`: specify the channel names to monitor and remind, separated by commas (optional)
+- `ALLOWED_USER_IDS`: specify the user *id*s allowed to use `@here` (optional)
 
 ## Deploying
 
