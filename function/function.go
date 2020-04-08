@@ -75,3 +75,13 @@ func HereHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(data)
 	}
 }
+
+func inSet(item string, set []string) bool {
+	for _, i := range set {
+		if item == i {
+			return true
+		}
+	}
+
+	return false
+}
