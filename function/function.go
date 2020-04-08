@@ -15,6 +15,7 @@ var (
 	token    string
 	channels []string
 	userIds  []string
+	reHere   = regexp.MustCompile(`<!(here)>`)
 	re       = regexp.MustCompile(`<!(here|channel|everyone)>`)
 )
 
@@ -59,15 +60,15 @@ func HereHandler(w http.ResponseWriter, r *http.Request) {
 	trigger := r.Form.Get("trigger_word")
 	channel := r.Form.Get("channel_name")
 
-	// Ignore allowed users
-	if len(userIds) > 0 && inSet(user, userIds) {
-		log.Printf("user '%s' used '%s' in '#%s' but is allowed", user, trigger, channel)
+	// Ignore unmonitored channels
+	if ignoreChannel(channel, channels) {
+		log.Printf("user '%s' used '%s' in '#%s' but it is not monitored", user, trigger, channel)
 		return
 	}
 
-	// Ignore unmonitored channels
-	if len(channels) > 0 && !inSet(channel, channels) {
-		log.Printf("user '%s' used '%s' in '#%s' but it is not monitored", user, trigger, channel)
+	// Ignore @here for allowed users
+	if reHere.MatchString(trigger) && ignoreUser(user, userIds) {
+		log.Printf("user '%s' used '%s' in '#%s' but is allowed", user, trigger, channel)
 		return
 	}
 
@@ -81,6 +82,14 @@ func HereHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(data)
 	}
+}
+
+func ignoreChannel(channel string, channels []string) bool {
+	return len(channels) > 0 && !inSet(channel, channels)
+}
+
+func ignoreUser(user string, userIds []string) bool {
+	return len(userIds) > 0 && inSet(user, userIds)
 }
 
 func inSet(item string, set []string) bool {
